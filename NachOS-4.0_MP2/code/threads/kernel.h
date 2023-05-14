@@ -27,7 +27,6 @@ class SynchDisk;
 
 typedef int OpenFileId;
 
-
 class Kernel {
   public:
     Kernel(int argc, char **argv);
@@ -64,6 +63,7 @@ class Kernel {
     PostOfficeOutput *postOfficeOut;
 
     int hostName;               // machine identifier
+    bool user_program;
 
   private:
 

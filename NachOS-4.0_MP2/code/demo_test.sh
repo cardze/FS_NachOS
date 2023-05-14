@@ -9,21 +9,15 @@ make clean
 make
 
 
-../build.linux/nachos -f
-../build.linux/nachos -cp file1.test /file1
-# ../build.linux/nachos -cp FS_test1 /FS_test1
-# ../build.linux/nachos -d tf -e /FS_test1
-# ../build.linux/nachos -l /
-../build.linux/nachos -p /file1
-../build.linux/nachos -cp FS_test2 /FS_test2
-../build.linux/nachos -e /FS_test2
+
 
 # run the test bash script
+clean
 # echo "***************************************"
 # sh FS_partII_a.sh
-# echo "***************************************"
-# sh FS_partII_b.sh
-# echo "***************************************"
+echo "***************************************"
+sh FS_partII_b.sh
+echo "***************************************"
 # sh FS_partII_c.sh
 # echo "***************************************"
 

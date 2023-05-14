@@ -305,10 +305,11 @@ int main(int argc, char **argv)
     // Calling "return" would terminate the program.
     // Instead, call Halt, which will first clean up, then
     //  terminate.
-    if (userProgName == NULL){
+    if (kernel->user_program == FALSE)
+    {
         kernel->interrupt->Halt();
-        DEBUG(dbgTraCode, "Check!!!");
     }
+    DEBUG(dbgThread, "Check!!!\n\n");
     kernel->ExecAll();
 
     ASSERTNOTREACHED();
