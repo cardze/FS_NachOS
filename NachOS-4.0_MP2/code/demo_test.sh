@@ -12,7 +12,7 @@ make
 
 
 # run the test bash script
-clean
+clear
 # echo "***************************************"
 # sh FS_partII_a.sh
 echo "***************************************"

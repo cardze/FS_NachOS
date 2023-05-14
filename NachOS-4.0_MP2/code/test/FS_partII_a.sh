@@ -1,9 +1,7 @@
 # FS_partII_a.sh
 ../build.linux/nachos -f
-# ../build.linux/nachos -cp file1.test /file1
 ../build.linux/nachos -cp FS_test1 /FS_test1
 ../build.linux/nachos -e /FS_test1
-# ../build.linux/nachos -l /
 ../build.linux/nachos -p /file1
 ../build.linux/nachos -cp FS_test2 /FS_test2
 ../build.linux/nachos -e /FS_test2
