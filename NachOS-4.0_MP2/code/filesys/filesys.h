@@ -36,6 +36,7 @@
 #include "copyright.h"
 #include "sysdep.h"
 #include "openfile.h"
+#include <map>
 
 #ifdef FILESYS_STUB // Temporarily implement file system calls as
 // calls to UNIX, until the real file system
@@ -145,10 +146,10 @@ public:
 
 	bool Remove(char *name) { return Unlink(name) == 0; }
 
-	OpenFile *fileDescriptorTable[20];
-
 private:
 	int table_len;
+	OpenFile *fileDescriptorTable[20];
+
 	OpenFile *freeMapFile;	 // Bit map of free disk blocks,
 							 // represented as a file
 	OpenFile *directoryFile; // "Root" directory -- list of
@@ -156,6 +157,7 @@ private:
 };
 
 #else // FILESYS
+typedef int OpenFileId;
 class FileSystem
 {
 public:
@@ -169,7 +171,15 @@ public:
 	bool Create(char *name, int initialSize);
 	// Create a file (UNIX creat)
 
-	OpenFile *Open(char *name); // Open a file (UNIX open)
+	OpenFile *Open(char *name);
+
+	OpenFileId OpenAFile(char *name);
+
+	int WriteAFile(char *buffer, int size, OpenFileId id);
+
+	int ReadAFile(char *buffer, int size, OpenFileId id);
+
+	int CloseAFile(OpenFileId id);
 
 	bool Remove(char *name); // Delete a file (UNIX unlink)
 
@@ -178,6 +188,7 @@ public:
 	void Print(); // List all the files and their contents
 
 private:
+	map<OpenFileId, OpenFile*> openedTable;
 	OpenFile *freeMapFile;	 // Bit map of free disk blocks,
 							 // represented as a file
 	OpenFile *directoryFile; // "Root" directory -- list of

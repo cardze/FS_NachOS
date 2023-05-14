@@ -303,12 +303,12 @@ int Kernel::Exec(char* name)
 //  cout << "after ThreadedKernel:Run();" << endl;  // unreachable
 }
 
-int Kernel::CreateFile(char *filename)
+int Kernel::CreateFile(char *filename,int size)
 {
     #ifdef FILESYS_STUB
 	return fileSystem->Create(filename);
     #else
-    return fileSystem->Create(filename, 1000);
+    return fileSystem->Create(filename, size);
     #endif
 }
 

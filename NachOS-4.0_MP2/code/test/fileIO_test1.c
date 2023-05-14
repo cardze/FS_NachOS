@@ -3,7 +3,8 @@
 int main(void)
 {
 	char test[] = "abcdefghijklmnopqrstuvwxyz";
-	int success = Create("file1.test");
+	int success = Create("/file1", 27);
+	MSG("Hello");
 	OpenFileId fid;
 	int i;
 	if (success != 1) MSG("Failed on creating file");

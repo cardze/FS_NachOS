@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "bit": "cpp",
+        "array": "cpp",
+        "system_error": "cpp",
+        "iostream": "cpp"
+    }
+}

@@ -240,9 +240,31 @@ Interrupt::Halt()
 }
 
 int
-Interrupt::CreateFile(char *filename)
+Interrupt::CreateFile(char *filename, int size)
 {
-    return kernel->CreateFile(filename);
+    cout<<"Creating file!\n\n";
+    // return kernel->CreateFile(filename, size);
+    return kernel->fileSystem->Create(filename, size);
+}
+
+OpenFileId
+Interrupt::OpenFile(char* name){
+    return kernel->fileSystem->OpenAFile(name);
+}
+
+int 
+Interrupt::WriteFile(char *buffer, int size, OpenFileId id){
+    return kernel->fileSystem->WriteAFile(buffer, size, id);
+}
+
+int
+Interrupt::ReadFile(char *buffer, int size, OpenFileId id){
+    return kernel->fileSystem->ReadAFile(buffer, size, id);
+}
+
+int
+Interrupt::CloseFile(OpenFileId id){
+    return kernel->fileSystem->CloseAFile(id);
 }
 
 

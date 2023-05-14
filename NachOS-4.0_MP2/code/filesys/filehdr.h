@@ -17,7 +17,8 @@
 #include "disk.h"
 #include "pbitmap.h"
 
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define NumDirect 	((SectorSize - 4 * sizeof(int)) / sizeof(int))
+#define NumIndirect ((SectorSize - 1 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
@@ -34,6 +35,7 @@
 // There is no constructor; rather the file header can be initialized
 // by allocating blocks for the file (if it is a new file), or by
 // reading it from disk.
+
 
 class FileHeader {
   public:
@@ -60,7 +62,21 @@ class FileHeader {
     int numBytes;			// Number of bytes in the file
     int numSectors;			// Number of data sectors in the file
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
-					// block in the file
+					                        // block in the file
+    int SingleIndirectSector;     // if the data is bigger than max file size,
+                                  // go to this data structure to continue.
+                                  // this give another 128 * 31 Byte
+                                  // so finally single indirect will support to 
+                                  // 128 *(28+31) Bytes (about 7KB)
+    int DoubleIndirectSector;     // to support 32KB , we need more indirect pointer
+                                  // this attemp will support 
+                                  // 128 *(28+31+31*31) Bytes (about 130KB)
+};
+
+class SingleIndirectPointer{
+  public:
+    int numsSector;                 // Number of data sectors in the single indirect pointer
+    int dataSectors[NumIndirect];   // extented data sector
 };
 
 #endif // FILEHDR_H

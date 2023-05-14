@@ -330,6 +330,43 @@ FileSystem::Open(char *name)
     return openFile; // return NULL if not found
 }
 
+OpenFileId
+FileSystem::OpenAFile(char *name){
+    OpenFile* one_file = Open(name);
+    OpenFileId id;
+    // choose a file discriptor which is not occupied by another opened file.
+    do{
+        id = rand(); 
+    }while(openedTable.find(id)!=openedTable.end());
+    // assign id to file on map
+    openedTable[id] = one_file;
+    return id;
+}
+
+int
+FileSystem::WriteAFile(char *buffer, int size, OpenFileId id){
+    if(openedTable.find(id)!=openedTable.end())
+        return openedTable[id]->Write(buffer, size);
+    return 0; // failed to write.
+}
+
+int
+FileSystem::ReadAFile(char *buffer, int size, OpenFileId id){
+    if(openedTable.find(id)!=openedTable.end())
+        return openedTable[id]->Read(buffer, size);
+    return 0; // failed to read.
+}
+
+int
+FileSystem::CloseAFile(OpenFileId id){
+    if(openedTable.find(id)!=openedTable.end()){
+        delete openedTable[id];
+        openedTable.erase(id);
+        return 1;
+    }
+    return 0; // failed to close.
+}
+
 //----------------------------------------------------------------------
 // FileSystem::Remove
 // 	Delete a file from the file system.  This requires:

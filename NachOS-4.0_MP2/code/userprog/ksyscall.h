@@ -25,12 +25,12 @@ int SysAdd(int op1, int op2)
 	return op1 + op2;
 }
 
-int SysCreate(char *filename)
+int SysCreate(char *filename,int size)
 {
 	// return value
 	// 1: success
 	// 0: failed
-	return kernel->interrupt->CreateFile(filename);
+	return kernel->interrupt->CreateFile(filename,size);
 }
 
 void SysPrintInt(int val)
@@ -57,26 +57,26 @@ void SysPrintInt(int val)
 	converted_int[str_index++] = ('\n');
 	kernel->synchConsoleOut->PutInt(converted_int, str_index + 1);
 }
-#ifdef FILESYS_STUB
+// #ifdef FILESYS_STUB
 OpenFileId SysOpen(char *name)
 {
-	return kernel->fileSystem->OpenAFile(name);
+	return kernel->interrupt->OpenFile(name);
 }
 
 int SysWrite(char *buffer, int size, OpenFileId id)
 {
-	return kernel->fileSystem->WriteAFile(buffer, size, id);
+	return kernel->interrupt->WriteFile(buffer, size, id);
 }
 
 int SysRead(char *buffer, int size, OpenFileId id)
 {
-	return kernel->fileSystem->ReadAFile(buffer, size, id);
+	return kernel->interrupt->ReadFile(buffer, size, id);
 }
 
 int SysClose(OpenFileId id)
 {
-	return kernel->fileSystem->CloseAFile(id);
+	return kernel->interrupt->CloseFile(id);
 }
-#endif // FILESYS_STUB
+// #endif // FILESYS_STUB
 
 #endif /* ! __USERPROG_KSYSCALL_H__ */
