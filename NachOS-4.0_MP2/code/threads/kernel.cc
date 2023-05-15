@@ -26,7 +26,7 @@
 
 Kernel::Kernel(int argc, char **argv)
 {
-    user_program = FALSE;
+    user_program = FALSE; //not user program 
     randomSlice = FALSE; 
     debugUserProg = FALSE;
     consoleIn = NULL;          // default is stdin

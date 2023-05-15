@@ -136,6 +136,7 @@ Disk::WriteRequest(int sectorNumber, char* data)
     int ticks = ComputeLatency(sectorNumber, TRUE);
 
     ASSERT(!active);
+    DEBUG(dbgDisk, "Before Writing to sector " << sectorNumber);
     ASSERT((sectorNumber >= 0) && (sectorNumber < NumSectors));
     
     DEBUG(dbgDisk, "Writing to sector " << sectorNumber);

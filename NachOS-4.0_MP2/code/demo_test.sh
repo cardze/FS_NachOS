@@ -1,5 +1,4 @@
 #rebuild all
-
 cd build.linux
 make distclean
 make depend
@@ -8,18 +7,16 @@ cd ../test
 make clean
 make
 
-
-
-
+# sh FS_partIII.sh
 # run the test bash script
 clear
 # echo "***************************************"
 # sh FS_partII_a.sh
-echo "***************************************"
-sh FS_partII_b.sh
-echo "***************************************"
-# sh FS_partII_c.sh
 # echo "***************************************"
+# sh FS_partII_b.sh
+echo "***************************************"
+sh FS_partII_c.sh
+echo "***************************************"
 
 # ../build.linux/nachos -d dt -cp file1.test /
 

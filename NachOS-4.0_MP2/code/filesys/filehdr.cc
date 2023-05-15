@@ -44,23 +44,97 @@ bool FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize)
 {
     numBytes = fileSize;
     numSectors = divRoundUp(fileSize, SectorSize);
+    // Init single and Double
+    SingleIndirectSector = -1;
+    DoubleIndirectSector = -1;
     if (freeMap->NumClear() < numSectors)
         return FALSE; // not enough space
 
-    if(numBytes > MaxFileSize){
-        // the file size is too big
-    }
+    int sectorCounter;
 
-    for (int i = 0; i < numSectors; i++)
+    for (sectorCounter = 0; (sectorCounter < NumDirect) && (sectorCounter < numSectors); sectorCounter++)
     {
-        dataSectors[i] = freeMap->FindAndSet();
+        dataSectors[sectorCounter] = freeMap->FindAndSet();
         // since we checked that there was enough free space,
         // we expect this to succeed
-        ASSERT(dataSectors[i] >= 0);
+        ASSERT(dataSectors[sectorCounter] >= 0);
+    }
+    if (sectorCounter == numSectors)
+    {
+        DEBUG(dbgFile, "Direct pointer is enough for " << fileSize << " size file.\n\n");
+        return TRUE;
+    }
+    int rested_size = numBytes - (NumDirect * SectorSize);
+    // Let's go single indirect
+    // 4KB limit (5KB -> 7KB)
+    if (this->AllocateSingleIndirect(freeMap))
+    {
+        return TRUE;
+    }
+    else
+    { // The single indirect is full...
+        rested_size -= (NumIndirect * SectorSize);
+        return AllocateDoubleIndirect(freeMap);
     }
     return TRUE;
 }
 
+bool FileHeader::AllocateSingleIndirect(PersistentBitmap *freeMap)
+{
+    SingleIndirectPointer *single_indirect = new SingleIndirectPointer;
+    // create it.
+    SingleIndirectSector = freeMap->FindAndSet();
+    single_indirect->numsSector = 0;
+    for (single_indirect->numsSector = 0;
+         (single_indirect->numsSector < NumIndirect) && ((single_indirect->numsSector + NumDirect) < this->numSectors);
+         single_indirect->numsSector++)
+    {
+        single_indirect->dataSectors[single_indirect->numsSector] = freeMap->FindAndSet();
+        // since we checked that there was enough free space,
+        // we expect this to succeed
+        ASSERT(single_indirect->dataSectors[single_indirect->numsSector] >= 0);
+    }
+    kernel->synchDisk->WriteSector(SingleIndirectSector, (char *)single_indirect);
+    if (single_indirect->numsSector == NumIndirect)
+    {
+        return FALSE;
+    }
+    // delete single_indirect;
+    return TRUE;
+}
+
+bool FileHeader::AllocateDoubleIndirect(PersistentBitmap *freeMap)
+{
+    int sector_counter = NumIndirect + NumDirect;
+    DoubleIndirectPointer *double_indirect = new DoubleIndirectPointer;
+    DoubleIndirectSector = freeMap->FindAndSet();
+    double_indirect->numsSector = 0;
+
+    while (sector_counter < this->numSectors)
+    {
+        SingleIndirectPointer *single = new SingleIndirectPointer;
+        single->numsSector = 0;
+        double_indirect->pointers[double_indirect->numsSector] = freeMap->FindAndSet();
+        for (single->numsSector = 0;
+             (single->numsSector < NumIndirect) && (single->numsSector + sector_counter < this->numSectors);
+             single->numsSector++)
+        {
+            single->dataSectors[single->numsSector] = freeMap->FindAndSet();
+            // since we checked that there was enough free space,
+            // we expect this to succeed
+            ASSERT(single->dataSectors[single->numsSector] >= 0);
+        }
+        sector_counter += NumIndirect;
+        double_indirect->numsSector++;
+        if (double_indirect->numsSector >= NumIndirect)
+            return FALSE;
+        kernel->synchDisk->WriteSector(double_indirect->pointers[double_indirect->numsSector], (char *)single);
+    }
+
+    kernel->synchDisk->WriteSector(DoubleIndirectSector, (char *)double_indirect);
+    // delete double_indirect;
+    return TRUE;
+}
 //----------------------------------------------------------------------
 // FileHeader::Deallocate
 // 	De-allocate all the space allocated for data blocks for this file.
@@ -70,11 +144,46 @@ bool FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize)
 
 void FileHeader::Deallocate(PersistentBitmap *freeMap)
 {
-    for (int i = 0; i < numSectors; i++)
+    SingleIndirectPointer *single_temp = new SingleIndirectPointer;
+    DoubleIndirectPointer *double_temp = new DoubleIndirectPointer;
+    for (int i = 0; i < numSectors && i < NumDirect; i++)
     {
         ASSERT(freeMap->Test((int)dataSectors[i])); // ought to be marked!
         freeMap->Clear((int)dataSectors[i]);
     }
+    if (SingleIndirectSector != -1)
+    {
+        kernel->synchDisk->ReadSector(SingleIndirectSector, (char *)single_temp);
+        for (int i = single_temp->numsSector - 1; i >= 0; i--)
+        {
+            ASSERT(freeMap->Test((int)single_temp->dataSectors[i])); // ought to be marked!
+            freeMap->Clear((int)single_temp->dataSectors[i]);
+        }
+        ASSERT(freeMap->Test((int)SingleIndirectSector)); // ought to be marked!
+        freeMap->Clear((int)SingleIndirectSector);
+        SingleIndirectSector = -1;
+    }
+    if (DoubleIndirectSector != -1)
+    {
+        kernel->synchDisk->ReadSector(DoubleIndirectSector, (char *)double_temp);
+        for (int i = double_temp->numsSector - 1; i >= 0; i--)
+        {
+            single_temp = new SingleIndirectPointer;
+            kernel->synchDisk->ReadSector(double_temp->pointers[i], (char *)single_temp);
+            for (int j = single_temp->numsSector - 1; j >= 0; j--)
+            {
+                ASSERT(freeMap->Test((int)single_temp->dataSectors[j])); // ought to be marked!
+                freeMap->Clear((int)single_temp->dataSectors[j]);
+            }
+            ASSERT(freeMap->Test((int)double_temp->pointers[i])); // ought to be marked!
+            freeMap->Clear((int)double_temp->pointers[i]);
+        }
+        ASSERT(freeMap->Test((int)DoubleIndirectSector)); // ought to be marked!
+        freeMap->Clear((int)DoubleIndirectSector);
+        DoubleIndirectSector = -1;
+    }
+    // delete single_temp;
+    // delete double_temp;
 }
 
 //----------------------------------------------------------------------
@@ -113,7 +222,34 @@ void FileHeader::WriteBack(int sector)
 
 int FileHeader::ByteToSector(int offset)
 {
-    return (dataSectors[offset / SectorSize]);
+    SingleIndirectPointer *single_temp = new SingleIndirectPointer;
+    DoubleIndirectPointer *double_temp = new DoubleIndirectPointer;
+    int offset_sector = offset / SectorSize;
+    if (offset_sector < NumDirect)
+    {
+        return (dataSectors[offset_sector]);
+    }
+    else
+    {
+        if (offset_sector < NumIndirect + NumDirect)
+        {
+            kernel->synchDisk->ReadSector(SingleIndirectSector, (char *)single_temp);
+            return (single_temp->dataSectors[offset_sector - NumDirect]);
+        }
+        else
+        {
+            single_temp = new SingleIndirectPointer;
+            kernel->synchDisk->ReadSector(DoubleIndirectSector, (char *)single_temp);
+            DEBUG(dbgFile, "Double indirect ByteToSector "<<(offset_sector - NumDirect - NumIndirect)<<" \n\n")
+
+            int index = double_temp->pointers[(offset_sector - NumDirect - NumIndirect) / NumIndirect];
+            DEBUG(dbgFile, "Double indirect ByteToSector "<<(index)<<" \n\n")
+            
+            kernel->synchDisk->ReadSector(index, (char *)single_temp);
+            DEBUG(dbgFile, "Double indirect ByteToSector "<<single_temp->dataSectors[(offset_sector - NumDirect - NumIndirect)%NumIndirect]<<" \n\n")
+            return (single_temp->dataSectors[(offset_sector - NumDirect - NumIndirect) % NumIndirect]);
+        }
+    }
 }
 
 //----------------------------------------------------------------------
