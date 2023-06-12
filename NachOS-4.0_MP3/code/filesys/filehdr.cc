@@ -94,12 +94,12 @@ bool FileHeader::AllocateSingleIndirect(PersistentBitmap *freeMap)
         // we expect this to succeed
         ASSERT(single_indirect->dataSectors[single_indirect->numsSector] >= 0);
     }
+    // write back single indirect block information into disk
     kernel->synchDisk->WriteSector(SingleIndirectSector, (char *)single_indirect);
     if (single_indirect->numsSector == NumIndirect)
     {
         return FALSE;
     }
-    // delete single_indirect;
     return TRUE;
 }
 
@@ -133,7 +133,6 @@ bool FileHeader::AllocateDoubleIndirect(PersistentBitmap *freeMap)
     }
 
     kernel->synchDisk->WriteSector(DoubleIndirectSector, (char *)double_indirect);
-    // delete double_indirect;
     return TRUE;
 }
 //----------------------------------------------------------------------
