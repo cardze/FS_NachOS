@@ -110,7 +110,7 @@ bool FileHeader::AllocateDoubleIndirect(PersistentBitmap *freeMap)
     DoubleIndirectSector = freeMap->FindAndSet();
     double_indirect->numsSector = 0;
 
-    while (sector_counter < this->numSectors)
+    while (sector_counter <= this->numSectors)
     {
         SingleIndirectPointer *single = new SingleIndirectPointer;
         single->numsSector = 0;
@@ -129,6 +129,7 @@ bool FileHeader::AllocateDoubleIndirect(PersistentBitmap *freeMap)
         if (double_indirect->numsSector >= NumIndirect)
             return FALSE;
         kernel->synchDisk->WriteSector(double_indirect->pointers[double_indirect->numsSector], (char *)single);
+        DEBUG(dbgFile, "Open Double indirect data table "<<double_indirect->numsSector<<" \n\n")
     }
 
     kernel->synchDisk->WriteSector(DoubleIndirectSector, (char *)double_indirect);
@@ -238,15 +239,17 @@ int FileHeader::ByteToSector(int offset)
         }
         else
         {
+            DEBUG(dbgFile, "Double indirect ByteToSector offset = "<<(offset)<<" \n\n")
+            
             single_temp = new SingleIndirectPointer;
-            kernel->synchDisk->ReadSector(DoubleIndirectSector, (char *)single_temp);
-            DEBUG(dbgFile, "Double indirect ByteToSector "<<(offset_sector - NumDirect - NumIndirect)<<" \n\n")
+            kernel->synchDisk->ReadSector(DoubleIndirectSector, (char *)double_temp);
+            DEBUG(dbgFile, "Double indirect ByteToSector table index = "<<(offset_sector - NumDirect - NumIndirect)<<" \n\n")
 
             int index = double_temp->pointers[(offset_sector - NumDirect - NumIndirect) / NumIndirect];
-            DEBUG(dbgFile, "Double indirect ByteToSector "<<(index)<<" \n\n")
+            DEBUG(dbgFile, "Double indirect ByteToSector index "<<(index)<<" \n\n")
             
             kernel->synchDisk->ReadSector(index, (char *)single_temp);
-            DEBUG(dbgFile, "Double indirect ByteToSector "<<single_temp->dataSectors[(offset_sector - NumDirect - NumIndirect)%NumIndirect]<<" \n\n")
+            DEBUG(dbgFile, "Double indirect ByteToSector sector = "<<single_temp->dataSectors[((offset_sector - NumDirect - NumIndirect)%NumIndirect)]<<" \n\n")
             return (single_temp->dataSectors[(offset_sector - NumDirect - NumIndirect) % NumIndirect]);
         }
     }
