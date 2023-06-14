@@ -146,8 +146,9 @@ FileSystem::FileSystem(bool format)
 // supports extensible files, the directory size sets the maximum number
 // of files that can be loaded onto the disk.
 #define FreeMapFileSize (NumSectors / BitsInByte)
-#define NumDirEntries 10
+#define NumDirEntries 64
 #define DirectoryFileSize (sizeof(DirectoryEntry) * NumDirEntries)
+
 
 //----------------------------------------------------------------------
 // FileSystem::FileSystem
@@ -172,6 +173,7 @@ FileSystem::FileSystem(bool format)
         FileHeader *mapHdr = new FileHeader;
         FileHeader *dirHdr = new FileHeader;
 
+        
         DEBUG(dbgFile, "Formatting the file system.");
 
         // First, allocate space for FileHeaders for the directory and bitmap
@@ -201,6 +203,11 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
 
+        // pwd implement
+        currentDirectoryFile = new OpenFile(DirectorySector);
+        currentDirectory = new Directory(NumDirEntries);
+        currentDirectory->FetchFrom(currentDirectoryFile);
+
         // Once we have the files "open", we can write the initial version
         // of each file back to disk.  The directory at this point is completely
         // empty; but the bitmap has been changed to reflect the fact that
@@ -227,8 +234,22 @@ FileSystem::FileSystem(bool format)
         // the bitmap and directory; these are left open while Nachos is running
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
+
+        // pwd implement
+        currentDirectoryFile = new OpenFile(DirectorySector);
+        currentDirectory = new Directory(NumDirEntries);
+        currentDirectory->FetchFrom(currentDirectoryFile);
     }
     DEBUG(dbgFile, "Finish initializing the file system.");
+}
+
+
+// destructor of filesystem class
+FileSystem::~FileSystem(){
+    if(currentDirectoryFile != NULL) delete currentDirectoryFile;
+    if(currentDirectory != NULL) delete currentDirectory;
+    delete freeMapFile;
+    delete directoryFile;
 }
 
 //----------------------------------------------------------------------

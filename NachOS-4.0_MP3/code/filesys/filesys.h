@@ -167,7 +167,7 @@ public:
 							 // If "format", there is nothing on
 							 // the disk, so initialize the directory
 							 // and the bitmap of free blocks.
-
+	~FileSystem();
 	bool Create(char *name, int initialSize);
 	// Create a file (UNIX creat)
 
@@ -193,6 +193,10 @@ private:
 							 // represented as a file
 	OpenFile *directoryFile; // "Root" directory -- list of
 							 // file names, represented as a file
+	// for recording the present working dir
+	OpenFile *currentDirectoryFile; 
+	Directory *currentDirectory;
+
 };
 
 #endif // FILESYS
