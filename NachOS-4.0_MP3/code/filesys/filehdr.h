@@ -42,7 +42,7 @@ public:
   bool Allocate(PersistentBitmap *bitMap, int fileSize); // Initialize a file header,
                                                          //  including allocating space
                                                          //  on disk for the file data
-  
+
   bool AllocateSingleIndirect(PersistentBitmap *freeMap);
   bool AllocateDoubleIndirect(PersistentBitmap *freeMap);
   void Deallocate(PersistentBitmap *bitMap); // De-allocate this file's
@@ -55,9 +55,9 @@ public:
   int ByteToSector(int offset); // Convert a byte offset into the file
                                 // to the disk sector containing
                                 // the byte
-
-  int FileLength(); // Return the length of the file
-                    // in bytes
+  
+  int FileLength();             // Return the length of the file
+                                // in bytes
 
   void Print(); // Print the contents of the file.
 

@@ -9,15 +9,18 @@ make
 
 # sh FS_partIII.sh
 # run the test bash script
-clear
+# clear
 # echo "***************************************"
 # sh FS_partII_a.sh
 # echo "***************************************"
 # sh FS_partII_b.sh
+# echo "***************************************"
+# sh FS_partII_c.sh
+# echo "***************************************"
+# sh FS_partIII_b.sh
 echo "***************************************"
-sh FS_partII_c.sh
+sh FS_partIII.sh
 echo "***************************************"
-
 # ../build.linux/nachos -d dt -cp file1.test /
 
 # test how the file system format virtual disk.

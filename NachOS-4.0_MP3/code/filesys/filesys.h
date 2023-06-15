@@ -37,6 +37,7 @@
 #include "sysdep.h"
 #include "openfile.h"
 #include <map>
+#include "directory.h"
 
 #ifdef FILESYS_STUB // Temporarily implement file system calls as
 // calls to UNIX, until the real file system
@@ -168,8 +169,10 @@ public:
 							 // the disk, so initialize the directory
 							 // and the bitmap of free blocks.
 	~FileSystem();
-	bool Create(char *name, int initialSize);
-	// Create a file (UNIX creat)
+    // split the @path into @arr and return the len of arr
+    int splitPath(char **arr, char *path);
+    bool Create(char *name, int initialSize);
+    // Create a file (UNIX creat)
 
 	OpenFile *Open(char *name);
 
@@ -183,20 +186,25 @@ public:
 
 	bool Remove(char *name); // Delete a file (UNIX unlink)
 
-	void List(); // List all the files in the file system
-
-	void Print(); // List all the files and their contents
+    void List(char *path); //show all file in path
+    // mkdir helper
+    bool createDir(char *name);
+	// change the current dir to the right place
+    bool changeToRightDir(char **arr, int len);
+    void resetRootDir();
+    // List all the files in the file system
+    bool MakeNewDir(char *name); // create new dir with @name
+	void Print();				 // List all the files and their contents
 
 private:
-	map<OpenFileId, OpenFile*> openedTable;
+	map<OpenFileId, OpenFile *> openedTable;
 	OpenFile *freeMapFile;	 // Bit map of free disk blocks,
 							 // represented as a file
 	OpenFile *directoryFile; // "Root" directory -- list of
 							 // file names, represented as a file
 	// for recording the present working dir
-	OpenFile *currentDirectoryFile; 
+	OpenFile *currentDirectoryFile;
 	Directory *currentDirectory;
-
 };
 
 #endif // FILESYS

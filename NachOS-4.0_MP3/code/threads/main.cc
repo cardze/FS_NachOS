@@ -174,8 +174,11 @@ int main(int argc, char **argv)
     char *copyNachosFileName = NULL; // name of copied file in Nachos
     char *printFileName = NULL;
     char *removeFileName = NULL;
+    char *createDirName = NULL;
+    char * listDirName = NULL;
     bool dirListFlag = false;
     bool dumpFlag = false;
+    bool makeDirFlag = false;
 #endif // FILESYS_STUB
 
     // some command line arguments are handled here.
@@ -233,11 +236,19 @@ int main(int argc, char **argv)
         }
         else if (strcmp(argv[i], "-l") == 0)
         {
+            ASSERT(i + 1 < argc);
+            listDirName = argv[i + 1];
             dirListFlag = true;
         }
         else if (strcmp(argv[i], "-D") == 0)
         {
             dumpFlag = true;
+        }
+        else if (strcmp(argv[i], "-mkdir") == 0)
+        {
+            ASSERT(i + 1 < argc);
+            createDirName = argv[i + 1];
+            i++;
         }
 #endif // FILESYS_STUB
         else if (strcmp(argv[i], "-u") == 0)
@@ -249,6 +260,7 @@ int main(int argc, char **argv)
             cout << "Partial usage: nachos [-cp UnixFile NachosFile]\n";
             cout << "Partial usage: nachos [-p fileName] [-r fileName]\n";
             cout << "Partial usage: nachos [-l] [-D]\n";
+            cout << "Partial usage: nachos [-mkdir dirname]\n";
 #endif // FILESYS_STUB
         }
     }
@@ -286,13 +298,19 @@ int main(int argc, char **argv)
     {
         Copy(copyUnixFileName, copyNachosFileName);
     }
+    if(createDirName != NULL){
+        if(kernel->fileSystem->MakeNewDir(createDirName))
+            cout<<"Success on creating new folder.."<<endl;
+        else
+            cout<<"Failed on creating new folder.."<<endl;
+    }
     if (dumpFlag)
     {
         kernel->fileSystem->Print();
     }
     if (dirListFlag)
     {
-        kernel->fileSystem->List();
+        kernel->fileSystem->List(listDirName);
     }
     if (printFileName != NULL)
     {

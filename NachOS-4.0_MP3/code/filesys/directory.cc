@@ -23,6 +23,7 @@
 #include "utility.h"
 #include "filehdr.h"
 #include "directory.h"
+#include "debug.h"
 
 //----------------------------------------------------------------------
 // Directory::Directory
@@ -40,7 +41,7 @@ Directory::Directory(int size)
     tableSize = size;
     for (int i = 0; i < tableSize; i++)
     {
-        table[i].inUse = FALSE;
+        table[i].inUse = NOT_USE;
     }
 }
 
@@ -89,7 +90,7 @@ void Directory::WriteBack(OpenFile *file)
 int Directory::FindIndex(char *name)
 {
     for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
+        if (table[i].inUse != NOT_USE && !strncmp(table[i].name, name, FileNameMaxLen))
             return i;
     return -1; // name not in directory
 }
@@ -123,19 +124,26 @@ int Directory::Find(char *name)
 //	"newSector" -- the disk sector containing the added file's header
 //----------------------------------------------------------------------
 
-bool Directory::Add(char *name, int newSector)
+bool Directory::Add(char *name, int newSector, int type)
 {
     if (FindIndex(name) != -1)
+    {
+        DEBUG(dbgFile, " Directory : index not found.");
         return FALSE;
+    }
 
     for (int i = 0; i < tableSize; i++)
-        if (!table[i].inUse)
+    {
+        if (table[i].inUse == NOT_USE)
         {
-            table[i].inUse = TRUE;
+            table[i].inUse = type;
             strncpy(table[i].name, name, FileNameMaxLen);
             table[i].sector = newSector;
             return TRUE;
         }
+        DEBUG(dbgFile, " Directory : in loop. The table entry type is "<<table[i].inUse);
+    }
+
     return FALSE; // no space.  Fix when we have extensible files.
 }
 
@@ -153,7 +161,7 @@ bool Directory::Remove(char *name)
 
     if (i == -1)
         return FALSE; // name not in directory
-    table[i].inUse = FALSE;
+    table[i].inUse = NOT_USE;
     return TRUE;
 }
 
@@ -164,9 +172,11 @@ bool Directory::Remove(char *name)
 
 void Directory::List()
 {
-    for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse)
-            printf("%s\n", table[i].name);
+    for (int i = 0, __cnt = tableSize; i < tableSize; i++)
+        if (table[i].inUse > 0)
+        {
+            printf("%s\t%s\n", table[i].name, table[i].inUse==1?"File":"Dir");
+        }
 }
 
 //----------------------------------------------------------------------
@@ -183,7 +193,7 @@ void Directory::Print()
     for (int i = 0; i < tableSize; i++)
         if (table[i].inUse)
         {
-            printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
+            printf("Name: %s, Sector: %d, Type : %d\n", table[i].name, table[i].sector, table[i].inUse);
             hdr->FetchFrom(table[i].sector);
             hdr->Print();
         }
